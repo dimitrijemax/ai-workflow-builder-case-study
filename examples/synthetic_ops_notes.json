@@ -1,0 +1,62 @@
+[
+  {
+    "id": "N-1001",
+    "channel": "field_note",
+    "text": "Operations lead reports that the weekly headcount dashboard does not match the source export and needs a correction path before review.",
+    "created_at": "day_01_09"
+  },
+  {
+    "id": "N-1002",
+    "channel": "portal",
+    "text": "Pilot coordinator cannot login to the admin workspace and the rollout team is blocked from updating store settings.",
+    "created_at": "day_01_10"
+  },
+  {
+    "id": "N-1003",
+    "channel": "chat",
+    "text": "Webhook sync from the handheld app to the planning dashboard fails when a new store task is created.",
+    "created_at": "day_01_11"
+  },
+  {
+    "id": "N-1004",
+    "channel": "survey",
+    "text": "The rollout guide is unclear and maybe missing the step for mapping source fields into the reporting template.",
+    "created_at": "day_01_12"
+  },
+  {
+    "id": "N-1005",
+    "channel": "field_note",
+    "text": "Team lead asks for an export filter that groups open rollout issues by store cluster, owner, and due date.",
+    "created_at": "day_02_09"
+  },
+  {
+    "id": "N-1006",
+    "channel": "chat",
+    "text": "Analyst reports that the dashboard is slow during weekly reporting and sometimes reaches a timeout.",
+    "created_at": "day_02_10"
+  },
+  {
+    "id": "N-1007",
+    "channel": "portal",
+    "text": "The report works now and the operations note was helpful for the internal rollout team.",
+    "created_at": "day_02_11"
+  },
+  {
+    "id": "N-1008",
+    "channel": "survey",
+    "text": "Stakeholder left a vague note about confusing work and did not explain which area or step is affected.",
+    "created_at": "day_02_12"
+  },
+  {
+    "id": "N-1009",
+    "channel": "chat",
+    "text": "Analyst sees an error when saving a custom operations dashboard and the change fails after reload.",
+    "created_at": "day_03_09"
+  },
+  {
+    "id": "N-1010",
+    "channel": "portal",
+    "text": "Process owner asks whether the docs include an example for source-to-report mapping and validation checks.",
+    "created_at": "day_03_10"
+  }
+]
