@@ -1,0 +1,279 @@
+name: PR contract
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate linked task, roles, and handoff
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const body = pr.body ?? "";
+            const bootstrapMarker = "Bootstrap exception: agent-pilot-v1";
+            const hasBootstrapMarker = body
+              .split(/\r?\n/)
+              .some((line) => line.trim() === bootstrapMarker);
+            const expectedRepo = (context.repo.owner + "/" + context.repo.repo).toLowerCase();
+            const isBootstrap =
+              pr.head.ref === "codex/pilot-agent-workflow" &&
+              pr.base.ref === "main" &&
+              pr.head.repo.full_name.toLowerCase() === expectedRepo &&
+              pr.base.repo.full_name.toLowerCase() === expectedRepo &&
+              hasBootstrapMarker;
+
+            function escapeRegExp(value) {
+              return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            }
+
+            function field(source, label) {
+              const escaped = escapeRegExp(label);
+              const pattern = new RegExp(
+                `(?:^|\\r?\\n)### ${escaped}\\s*\\r?\\n+([\\s\\S]*?)(?=\\r?\\n### |$)`,
+                "i",
+              );
+              return source.match(pattern)?.[1].trim() ?? "";
+            }
+
+            function section(source, heading) {
+              const escaped = escapeRegExp(heading);
+              const pattern = new RegExp(
+                "(?:^|\\r?\\n)## " +
+                  escaped +
+                  "\\s*\\r?\\n+([\\s\\S]*?)(?=\\r?\\n## |$)",
+                "i",
+              );
+              return source.match(pattern)?.[1].trim() ?? "";
+            }
+
+            function hasSubstance(value) {
+              return (
+                value.toLowerCase() !== "_no response_" &&
+                value.replace(/[-_*#:<>\s]/g, "").length > 0
+              );
+            }
+
+            const taskRequired = [
+              ["linked closing issue", /(?:Closes|Fixes|Resolves)\s+#\d+/i],
+              ["risk lane", /^-\s*Risk lane:\s*L[123]\s*$/im],
+              ["Codex analyst", /-\s*Analyst:\s*Codex\b/i],
+              ["single named builder", /-\s*Builder:\s*(?:Claude Code|Junie|Owner \/ PyCharm)\b/i],
+              ["named verifier", /-\s*Verifier:\s*.+/i],
+              ["Codex reviewer", /-\s*Reviewer:\s*Codex\b/i],
+            ];
+            const required = [
+              ...(isBootstrap ? [] : taskRequired),
+              ["outcome section", /^## Outcome\s*$/im],
+              ["scope section", /^## Scope\s*$/im],
+              ["builder handoff section", /^## Builder handoff\s*$/im],
+            ];
+
+            const missing = required
+              .filter(([, pattern]) => !pattern.test(body))
+              .map(([label]) => label);
+
+            if (isBootstrap) {
+              if (pr.user.login.toLowerCase() !== context.repo.owner.toLowerCase()) {
+                missing.push("bootstrap PR is opened by the repository owner");
+              }
+              const allowedBootstrapFiles = new Set([
+                ".gitignore",
+                "AGENTS.md",
+                ".github/ISSUE_TEMPLATE/coding-task.yml",
+                ".github/ISSUE_TEMPLATE/config.yml",
+                ".github/pull_request_template.md",
+                ".github/workflows/pr-contract.yml",
+                ".github/workflows/task-state.yml",
+                "docs/AGENT_PILOT.md",
+                "tests/test_agent_workflow_contract.py",
+              ]);
+              try {
+                const files = await github.paginate(github.rest.pulls.listFiles, {
+                  ...context.repo,
+                  pull_number: pr.number,
+                  per_page: 100,
+                });
+                const outsideScope = files
+                  .flatMap((file) => [file.filename, file.previous_filename])
+                  .filter(Boolean)
+                  .filter((filename) => !allowedBootstrapFiles.has(filename));
+                if (outsideScope.length > 0) {
+                  missing.push("bootstrap files stay in allowlist: " + outsideScope.join(", "));
+                }
+              } catch (error) {
+                missing.push("bootstrap file scope can be read: " + error.message);
+              }
+            }
+
+            const closingMatch = body.match(/(?:Closes|Fixes|Resolves)\s+#(\d+)/i);
+            if (closingMatch) {
+              try {
+                const issueNumber = Number(closingMatch[1]);
+                const response = await github.rest.issues.get({
+                  ...context.repo,
+                  issue_number: issueNumber,
+                });
+                const task = response.data;
+                const taskBody = task.body ?? "";
+                const taskLabels = task.labels.map((label) =>
+                  typeof label === "string" ? label : label.name,
+                );
+
+                if (task.pull_request) missing.push("closing reference points to an issue");
+                if (task.state !== "open") missing.push("linked issue is open");
+                if (field(taskBody, "Task state") !== "Ready") {
+                  missing.push("linked issue Task state is Ready");
+                }
+                if (!taskLabels.includes("pilot:ready")) {
+                  missing.push("linked issue has pilot:ready label");
+                }
+                const readyIssues = await github.paginate(github.rest.issues.listForRepo, {
+                  ...context.repo,
+                  state: "open",
+                  labels: "pilot:ready",
+                  per_page: 100,
+                });
+                const readyTasks = readyIssues.filter((candidate) => !candidate.pull_request);
+                if (readyTasks.length !== 1 || readyTasks[0].number !== issueNumber) {
+                  missing.push("linked issue is the only open pilot:ready task");
+                }
+
+                const prRisk = body.match(/^-\s*Risk lane:\s*(L[123])\s*$/im)?.[1] ?? "";
+                const prBuilder =
+                  body.match(
+                    /^-\s*Builder:\s*(Claude Code|Junie|Owner \/ PyCharm)\s*$/im,
+                  )?.[1] ?? "";
+                const prVerifier =
+                  body.match(/^-\s*Verifier:\s*(.+?)\s*$/im)?.[1] ?? "";
+
+                if (!field(taskBody, "Risk lane").startsWith(prRisk)) {
+                  missing.push("PR risk lane matches linked issue");
+                }
+                if (field(taskBody, "Builder") !== prBuilder) {
+                  missing.push("PR builder matches linked issue");
+                }
+                if (field(taskBody, "Verifier") !== prVerifier) {
+                  missing.push("PR verifier matches linked issue");
+                }
+
+                if (
+                  field(taskBody, "Analyst") !== "Codex (read-only)" ||
+                  field(taskBody, "Reviewer") !== "Codex (read-only)"
+                ) {
+                  missing.push("linked issue has fixed Codex analyst and reviewer");
+                }
+                if (!["PyCharm plus WSL", "PyCharm only"].includes(field(taskBody, "Verifier"))) {
+                  missing.push("linked issue has a valid verifier");
+                }
+                if (
+                  ![
+                    "Half day or less",
+                    "One working day",
+                    "Two working days maximum",
+                  ].includes(field(taskBody, "Timebox"))
+                ) {
+                  missing.push("linked issue has a valid timebox");
+                }
+
+                const requiredTaskText = [
+                  "Outcome",
+                  "Allowed scope",
+                  "Non-goals and forbidden changes",
+                  "Verification plan",
+                  "Dependencies or blockers",
+                ];
+                for (const label of requiredTaskText) {
+                  if (!hasSubstance(field(taskBody, label))) {
+                    missing.push("linked issue has substantive " + label);
+                  }
+                }
+                if (!/-\s*\[[ xX]\]\s+\S+/.test(field(taskBody, "Acceptance criteria"))) {
+                  missing.push("linked issue has a substantive acceptance criterion");
+                }
+                if (
+                  field(taskBody, "Builder") === "Junie" &&
+                  !field(taskBody, "Risk lane").startsWith("L1")
+                ) {
+                  missing.push("Junie is limited to an L1 task");
+                }
+
+                const safety = field(taskBody, "Public-safety confirmation");
+                const checkedSafety = safety.match(/-\s*\[[xX]\]/g) ?? [];
+                if (checkedSafety.length < 5) {
+                  missing.push("linked issue public-safety confirmation is complete");
+                }
+
+                if (!pr.draft) {
+                  const progress = field(taskBody, "Workflow progress");
+                  const checkedProgress = progress.match(/-\s*\[[xX]\]/g) ?? [];
+                  if (checkedProgress.length < 8) {
+                    missing.push("linked issue workflow progress is complete");
+                  }
+                }
+              } catch (error) {
+                missing.push(`linked issue can be read (${error.message})`);
+              }
+            }
+
+            if (!pr.draft) {
+              const headSha = pr.head.sha.toLowerCase();
+              const handoffSha =
+                body.match(/^- Handoff commit:\s*([0-9a-f]{40})\s*$/im)?.[1].toLowerCase() ?? "";
+              const reviewedSha =
+                body.match(/^- Reviewed commit:\s*([0-9a-f]{40})\s*$/im)?.[1].toLowerCase() ?? "";
+              if (handoffSha !== headSha) {
+                missing.push("handoff commit matches current PR head");
+              }
+              if (reviewedSha !== headSha) {
+                missing.push("reviewed commit matches current PR head");
+              }
+
+              const outcome = section(body, "Outcome");
+              if (
+                !hasSubstance(outcome) ||
+                outcome.includes("Describe the observable result delivered by this PR.")
+              ) {
+                missing.push("substantive PR outcome");
+              }
+              const scope = section(body, "Scope");
+              const changedScope = scope.match(/^- Changed:\s*(.+)\s*$/im)?.[1] ?? "";
+              if (!hasSubstance(changedScope)) missing.push("substantive changed scope");
+
+              const handoff = section(body, "Builder handoff");
+              const changedFiles = handoff.match(/^- Changed files:\s*(.+)\s*$/im)?.[1] ?? "";
+              const checksRun = handoff.match(/^- Checks run:\s*(.+)\s*$/im)?.[1] ?? "";
+              if (!hasSubstance(changedFiles)) missing.push("non-empty handoff changed files");
+              if (!hasSubstance(checksRun)) missing.push("non-empty handoff checks run");
+
+              const readyChecks = [
+                "Targeted tests passed",
+                "Full lint and test suite passed locally",
+                "Offline demo passed, or the issue explains why it is not applicable",
+                "No real/private data, credentials, live outputs, or unsupported public claims were added",
+                "GitHub Actions is expected to remain fully offline and synthetic",
+                "Codex read-only review completed after builder handoff",
+                "Blocking findings resolved by the same builder",
+                "Optional findings were deferred instead of expanding scope",
+                "Diff reviewed in PyCharm",
+                "Manual demo or owner-only smoke completed, or not applicable",
+                "Staged scope matches the linked issue",
+              ];
+              for (const label of readyChecks) {
+                const escaped = escapeRegExp(label);
+                const checked = new RegExp(`- \\[x\\] ${escaped}`, "i");
+                if (!checked.test(body)) missing.push(`checked item: ${label}`);
+              }
+            }
+
+            if (missing.length > 0) {
+              core.setFailed(`PR contract is incomplete: ${missing.join(", ")}`);
+            }

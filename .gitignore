@@ -1,4 +1,5 @@
 .env
+.active_writer.lock
 .venv/
 .idea/
 __pycache__/

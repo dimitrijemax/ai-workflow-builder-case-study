@@ -1,0 +1,182 @@
+name: Pilot coding task
+description: Create one bounded coding deliverable with explicit agent roles and verification.
+title: "[Pilot] "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        One issue is one deliverable. Keep the task public-safe, synthetic, and small enough to
+        finish within two working days.
+
+  - type: dropdown
+    id: task-state
+    attributes:
+      label: Task state
+      description: Only one issue should be Ready at a time.
+      options:
+        - Ready
+        - Next
+        - Blocked
+    validations:
+      required: true
+
+  - type: dropdown
+    id: risk-lane
+    attributes:
+      label: Risk lane
+      description: L3 includes providers, schemas, prompts, routing, privacy, or public claims.
+      options:
+        - L1 - bounded and mechanically verifiable
+        - L2 - integrated application logic
+        - L3 - guarded boundary or public claim
+    validations:
+      required: true
+
+  - type: dropdown
+    id: analyst
+    attributes:
+      label: Analyst
+      options:
+        - Codex (read-only)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: builder
+    attributes:
+      label: Builder
+      description: This is the only writer for the task.
+      options:
+        - Claude Code
+        - Junie
+        - Owner / PyCharm
+    validations:
+      required: true
+
+  - type: dropdown
+    id: verifier
+    attributes:
+      label: Verifier
+      options:
+        - PyCharm plus WSL
+        - PyCharm only
+    validations:
+      required: true
+
+  - type: dropdown
+    id: reviewer
+    attributes:
+      label: Reviewer
+      options:
+        - Codex (read-only)
+    validations:
+      required: true
+
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Outcome
+      description: Describe the observable result, not the implementation steps.
+      placeholder: A user can ... and the workflow ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Use a checklist with externally observable or testable conditions.
+      placeholder: |
+        - [ ] The observable result is ...
+        - [ ] The regression test proves ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Allowed scope
+      description: List the files or modules that the builder may change.
+      placeholder: |
+        - README.md
+        - src/ai_workflow_builder/providers.py
+        - tests/test_providers.py
+    validations:
+      required: true
+
+  - type: textarea
+    id: non-goals
+    attributes:
+      label: Non-goals and forbidden changes
+      description: State what must not be added or changed during this task.
+      placeholder: No RAG, vector database, MCP, live data, credentials, or unrelated cleanup.
+    validations:
+      required: true
+
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification plan
+      description: Name targeted tests, full checks, and any owner-run smoke step.
+      placeholder: |
+        - Targeted: uv run --locked pytest tests/test_example.py -q
+        - Full lint: uv run --locked ruff check .
+        - Full tests: uv run --locked pytest -q
+        - Owner smoke: not required
+    validations:
+      required: true
+
+  - type: dropdown
+    id: timebox
+    attributes:
+      label: Timebox
+      options:
+        - Half day or less
+        - One working day
+        - Two working days maximum
+    validations:
+      required: true
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies or blockers
+      description: Link another issue or write None.
+      placeholder: None
+    validations:
+      required: true
+
+  - type: textarea
+    id: progress
+    attributes:
+      label: Workflow progress
+      description: Update this checklist while the task moves through the pilot.
+      value: |
+        - [ ] Codex preflight completed
+        - [ ] Owner approved the implementation plan
+        - [ ] Builder acquired the single-writer seat
+        - [ ] Builder posted handoff
+        - [ ] Deterministic verification passed
+        - [ ] Codex read-only review completed
+        - [ ] Blocking findings resolved
+        - [ ] Ready for PR
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: public-safety
+    attributes:
+      label: Public-safety confirmation
+      options:
+        - label: The task uses only synthetic, public-safe material.
+          required: true
+        - label: No secret enters the repository, CI, issue, or any agent context.
+          required: true
+        - label: The task does not copy private prompts, labels, outputs, benchmarks, or history.
+          required: true
+        - label: Any credentialed live smoke, if required, is owner-only and its output stays local.
+          required: true
+        - label: A cheap model is used only where the result has a deterministic verification target.
+          required: true

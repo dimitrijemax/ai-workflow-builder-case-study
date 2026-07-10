@@ -1,0 +1,211 @@
+name: Task state
+
+on:
+  issues:
+    types: [opened, edited, reopened]
+
+permissions:
+  issues: write
+
+concurrency:
+  group: pilot-task-state
+  queue: max
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate contract and sync task labels
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const issueNumber = context.payload.issue.number;
+            const response = await github.rest.issues.get({
+              owner,
+              repo,
+              issue_number: issueNumber,
+            });
+            const issue = response.data;
+            const body = issue.body ?? "";
+
+            const labelDefinitions = new Map([
+              ["pilot:ready", ["0e8a16", "The only task ready for implementation"]],
+              ["pilot:next", ["1d76db", "Queued after the current ready task"]],
+              ["pilot:blocked", ["b60205", "Waiting on a named dependency or decision"]],
+              ["pilot:conflict", ["d93f0b", "Conflicts with another ready task"]],
+              ["risk:l1", ["c2e0c6", "Bounded and mechanically verifiable"]],
+              ["risk:l2", ["fbca04", "Integrated application logic"]],
+              ["risk:l3", ["d93f0b", "Guarded boundary or public claim"]],
+              ["builder:claude", ["5319e7", "Claude Code is the single writer"]],
+              ["builder:junie", ["0e8a16", "Junie is the single writer"]],
+              ["builder:owner", ["0052cc", "Owner / PyCharm is the single writer"]],
+              ["contract:invalid", ["b60205", "Issue contract is missing or malformed"]],
+            ]);
+
+            const managedLabels = new Set(labelDefinitions.keys());
+
+            function escapeRegExp(value) {
+              return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            }
+
+            function field(label) {
+              const escaped = escapeRegExp(label);
+              const pattern = new RegExp(
+                `(?:^|\\r?\\n)### ${escaped}\\s*\\r?\\n+([\\s\\S]*?)(?=\\r?\\n### |$)`,
+                "i",
+              );
+              return body.match(pattern)?.[1].trim() ?? "";
+            }
+
+            async function ensureLabel(name) {
+              try {
+                await github.rest.issues.getLabel({ owner, repo, name });
+              } catch (error) {
+                if (error.status !== 404) throw error;
+                const [color, description] = labelDefinitions.get(name);
+                await github.rest.issues.createLabel({ owner, repo, name, color, description });
+              }
+            }
+
+            for (const name of managedLabels) await ensureLabel(name);
+
+            const state = field("Task state");
+            const risk = field("Risk lane");
+            const analyst = field("Analyst");
+            const builder = field("Builder");
+            const verifier = field("Verifier");
+            const reviewer = field("Reviewer");
+            const outcome = field("Outcome");
+            const acceptance = field("Acceptance criteria");
+            const allowedScope = field("Allowed scope");
+            const nonGoals = field("Non-goals and forbidden changes");
+            const verification = field("Verification plan");
+            const timebox = field("Timebox");
+            const dependencies = field("Dependencies or blockers");
+            const progress = field("Workflow progress");
+            const safety = field("Public-safety confirmation");
+
+            const stateLabels = {
+              Ready: "pilot:ready",
+              Next: "pilot:next",
+              Blocked: "pilot:blocked",
+            };
+            const builderLabels = {
+              "Claude Code": "builder:claude",
+              Junie: "builder:junie",
+              "Owner / PyCharm": "builder:owner",
+            };
+            const verifierOptions = new Set(["PyCharm plus WSL", "PyCharm only"]);
+            const timeboxOptions = new Set([
+              "Half day or less",
+              "One working day",
+              "Two working days maximum",
+            ]);
+            const riskMatch = risk.match(/^L([123])\b/);
+
+            let failure = "";
+            let desired = [];
+
+            function hasSubstance(value) {
+              return (
+                value.toLowerCase() !== "_no response_" &&
+                value.replace(/[-_*#\s]/g, "").length > 0
+              );
+            }
+
+            const contractErrors = [];
+            if (!stateLabels[state] || !builderLabels[builder] || !riskMatch) {
+              contractErrors.push("valid Task state, Risk lane, and Builder");
+            }
+            if (analyst !== "Codex (read-only)" || reviewer !== "Codex (read-only)") {
+              contractErrors.push("fixed Codex analyst and reviewer");
+            }
+            if (!verifierOptions.has(verifier)) contractErrors.push("valid Verifier");
+            if (!timeboxOptions.has(timebox)) contractErrors.push("valid Timebox");
+
+            const requiredText = [
+              ["Outcome", outcome],
+              ["Allowed scope", allowedScope],
+              ["Non-goals", nonGoals],
+              ["Verification plan", verification],
+              ["Dependencies", dependencies],
+            ];
+            const missingText = requiredText
+              .filter(([, value]) => !hasSubstance(value))
+              .map(([label]) => label);
+            if (missingText.length > 0) {
+              contractErrors.push("substantive " + missingText.join(", "));
+            }
+            if (!/-\s*\[[ xX]\]\s+\S+/.test(acceptance)) {
+              contractErrors.push("at least one substantive acceptance criterion");
+            }
+            const progressItems = progress.match(/-\s*\[[ xX]\]\s+\S+/g) ?? [];
+            if (progressItems.length < 8) {
+              contractErrors.push("complete workflow progress checklist structure");
+            }
+
+            const safetyRequirements = [
+              "The task uses only synthetic, public-safe material.",
+              "No secret enters the repository, CI, issue, or any agent context.",
+              "The task does not copy private prompts, labels, outputs, benchmarks, or history.",
+              "Any credentialed live smoke, if required, is owner-only and its output stays local.",
+              "A cheap model is used only where the result has a deterministic verification target.",
+            ];
+            const checkedSafety = safety
+              .split(/\r?\n/)
+              .filter((line) => /^-\s*\[[xX]\]\s+/.test(line))
+              .map((line) => line.replace(/^-\s*\[[xX]\]\s+/, "").trim());
+            if (!safetyRequirements.every((requirement) => checkedSafety.includes(requirement))) {
+              contractErrors.push("all public-safety confirmations");
+            }
+            if (builder === "Junie" && riskMatch?.[1] !== "1") {
+              contractErrors.push("Junie as builder only for an L1 task");
+            }
+
+            if (contractErrors.length > 0) {
+              desired = ["contract:invalid"];
+              failure = "Task contract is invalid: " + contractErrors.join("; ") + ".";
+            } else {
+              desired = [stateLabels[state], `risk:l${riskMatch[1]}`, builderLabels[builder]];
+            }
+
+            if (!failure && state === "Ready") {
+              const readyIssues = await github.paginate(github.rest.issues.listForRepo, {
+                owner,
+                repo,
+                state: "open",
+                labels: "pilot:ready",
+                per_page: 100,
+              });
+              const conflicts = readyIssues.filter(
+                (candidate) => !candidate.pull_request && candidate.number !== issue.number,
+              );
+              if (conflicts.length > 0) {
+                desired[0] = "pilot:conflict";
+                failure = `Only one task may be Ready; resolve #${conflicts[0].number} first.`;
+              }
+            }
+
+            const current = issue.labels.map((label) =>
+              typeof label === "string" ? label : label.name,
+            );
+            for (const name of current) {
+              if (managedLabels.has(name) && !desired.includes(name)) {
+                await github.rest.issues.removeLabel({
+                  owner,
+                  repo,
+                  issue_number: issue.number,
+                  name,
+                });
+              }
+            }
+            await github.rest.issues.addLabels({
+              owner,
+              repo,
+              issue_number: issue.number,
+              labels: desired,
+            });
+
+            if (failure) core.setFailed(failure);
