@@ -111,6 +111,14 @@ def test_pr_contract_reads_the_linked_issue_and_enforces_ready_gates() -> None:
         assert text in workflow
 
 
+def test_ci_passes_the_automatic_token_to_gitleaks() -> None:
+    workflow = read_repo_file(".github/workflows/ci.yml")
+
+    assert "gitleaks/gitleaks-action@v2" in workflow
+    assert "GITHUB_" + "TOKEN" in workflow
+    assert "secrets.GITHUB_" + "TOKEN" in workflow
+
+
 def test_agent_rules_enforce_one_builder_and_explicit_git_boundary() -> None:
     rules = read_repo_file("AGENTS.md")
     normalized_rules = " ".join(rules.split())
