@@ -40,9 +40,18 @@ def load_review_queue(output_dir: Path) -> list[ReviewItem]:
 
 def save_review_queue(output_dir: Path, queue: list[ReviewItem]) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
+    # Same canonical byte contract as pipeline writers: UTF-8 without BOM, LF only, one final LF,
+    # ensure_ascii=False / indent=2 / sort_keys=True. The reviewed_at value itself may vary.
     review_queue_path(output_dir).write_text(
-        json.dumps([item.model_dump(mode="json") for item in queue], indent=2),
+        json.dumps(
+            [item.model_dump(mode="json") for item in queue],
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
         encoding="utf-8",
+        newline="\n",
     )
 
 

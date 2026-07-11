@@ -5,13 +5,13 @@ from typing import Any, Protocol
 from ai_workflow_builder.schemas import InsightCategory, OpsNote, Sentiment
 
 
-class LLMProvider(Protocol):
+class InsightProvider(Protocol):
     def extract_insight(self, note: OpsNote) -> dict[str, Any]:
         """Return a raw structured payload that must still be schema-validated."""
 
 
-class FakeLLM:
-    """Deterministic offline provider for demos and tests."""
+class DeterministicRuleProvider:
+    """Deterministic offline rule provider for demos and tests."""
 
     def extract_insight(self, note: OpsNote) -> dict[str, Any]:
         text = note.text.lower()
@@ -109,22 +109,3 @@ class FakeLLM:
         if sentiment == Sentiment.NEGATIVE:
             return [item, "Acknowledge urgency and provide a clear next update window."]
         return [item]
-
-
-class LiteLLMProvider:
-    """Optional adapter placeholder for real model calls outside the offline demo."""
-
-    def __init__(self, model: str) -> None:
-        try:
-            import litellm  # type: ignore[import-not-found]
-        except ImportError as exc:  # pragma: no cover - depends on optional extra
-            raise RuntimeError(
-                "Install the llm extra and configure runtime credentials outside the repository."
-            ) from exc
-        self._litellm = litellm
-        self._model = model
-
-    def extract_insight(self, note: OpsNote) -> dict[str, Any]:
-        raise NotImplementedError(
-            "This case study keeps real model calls out of the offline demo path."
-        )

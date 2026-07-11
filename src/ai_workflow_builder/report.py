@@ -77,5 +77,7 @@ def build_markdown_report(output_dir: Path) -> str:
 def write_markdown_report(output_dir: Path, report_path: Path | None = None) -> Path:
     path = report_path or output_dir / "report.md"
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(build_markdown_report(output_dir), encoding="utf-8")
+    # UTF-8 without BOM, LF only, exactly one final LF. build_markdown_report already supplies the
+    # single trailing newline, so no second final LF is added here.
+    path.write_text(build_markdown_report(output_dir), encoding="utf-8", newline="\n")
     return path
