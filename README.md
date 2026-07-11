@@ -57,10 +57,10 @@ is available, `awb demo` and the tests run with no external APIs, model calls, o
   approval. Flagged items are never hidden — pending and rejected items stay visible in their own
   status sections for auditability.
 - **Case-study constraints.** Dependency setup (`uv sync --locked --all-extras`) may reach your
-  package index on a fresh machine, but the demo execution itself is offline and deterministic — a
-  fake provider makes no external API or model calls and needs no credentials, so local runs and CI
-  stay reproducible. This is a case study, not a production system, and it makes no accuracy or
-  production claims.
+  package index on a fresh machine, but the demo execution itself is offline and deterministic — the
+  `DeterministicRuleProvider` makes no external API or model calls and needs no credentials, so local
+  runs and CI stay reproducible. This is a case study, not a production system, and it makes no
+  accuracy or production claims.
 
 ## Architecture
 
@@ -98,7 +98,7 @@ uv run awb report -o out/demo
 
 This repository is a distilled clean-room kernel of a larger private project that runs on real, privacy-sensitive data. It was rebuilt from scratch with synthetic data only; it is a case study, not a production system.
 
-Real-model integration lives in the private system. This public kernel keeps the default path offline and deterministic for review and CI. The optional LiteLLM adapter marks the provider boundary without requiring credentials or network calls.
+This public kernel keeps the default path offline and deterministic for review and CI: insight extraction is performed by the `DeterministicRuleProvider` (keyword and rule based), while the separate rubric validators — not the provider — flag low confidence, a negative-sentiment insight that carries no action item, and overconfident summary language. No real-model provider or network adapter is bundled here. Only the pinned dependency bootstrap (`uv sync --locked`) may reach the public package registry; application, demo, and test execution are fully offline afterward, with no model or API calls and no credentials.
 
 ## Boundaries
 

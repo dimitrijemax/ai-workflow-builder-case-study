@@ -38,9 +38,7 @@ def test_coding_task_form_keeps_required_contract_fields() -> None:
     assert "No secret enters the repository, CI, issue, or any agent context." in issue_form
     assert "uv run --locked pytest" in issue_form
     assert "uv run --locked ruff" in issue_form
-    assert "blank_issues_enabled: false" in read_repo_file(
-        ".github/ISSUE_TEMPLATE/config.yml"
-    )
+    assert "blank_issues_enabled: false" in read_repo_file(".github/ISSUE_TEMPLATE/config.yml")
 
 
 def test_pr_template_keeps_handoff_and_review_gates() -> None:

@@ -9,9 +9,6 @@ dependencies = [
     "typer>=0.12",
 ]
 
-[project.optional-dependencies]
-llm = ["litellm"]
-
 [project.scripts]
 awb = "ai_workflow_builder.cli:app"
 

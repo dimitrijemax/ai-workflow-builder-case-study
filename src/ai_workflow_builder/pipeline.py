@@ -6,7 +6,7 @@ from pathlib import Path
 
 from pydantic import TypeAdapter
 
-from ai_workflow_builder.providers import FakeLLM, LLMProvider
+from ai_workflow_builder.providers import DeterministicRuleProvider, InsightProvider
 from ai_workflow_builder.review import build_review_items
 from ai_workflow_builder.schemas import BatchReport, OpsInsight, OpsNote
 from ai_workflow_builder.validators import validate_batch
@@ -21,13 +21,13 @@ def load_ops_notes(path: Path) -> list[OpsNote]:
 
 def extract_insights(
     notes: list[OpsNote],
-    provider: LLMProvider | None = None,
+    provider: InsightProvider | None = None,
 ) -> list[OpsInsight]:
-    selected_provider = provider or FakeLLM()
+    selected_provider = provider or DeterministicRuleProvider()
     return [OpsInsight.model_validate(selected_provider.extract_insight(note)) for note in notes]
 
 
-def run_pipeline(input_path: Path, provider: LLMProvider | None = None) -> BatchReport:
+def run_pipeline(input_path: Path, provider: InsightProvider | None = None) -> BatchReport:
     notes = load_ops_notes(input_path)
     insights = extract_insights(notes, provider=provider)
     issues = validate_batch(insights)
@@ -42,15 +42,38 @@ def run_pipeline(input_path: Path, provider: LLMProvider | None = None) -> Batch
 
 def write_batch_report(batch: BatchReport, output_dir: Path) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
+    # Canonical byte contract: UTF-8 without BOM, LF only, exactly one final LF, and stable
+    # ensure_ascii=False / indent=2 / sort_keys=True serialization. List/input order is preserved.
     (output_dir / "insights.json").write_text(
-        json.dumps([item.model_dump(mode="json") for item in batch.insights], indent=2),
+        json.dumps(
+            [item.model_dump(mode="json") for item in batch.insights],
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
         encoding="utf-8",
+        newline="\n",
     )
     (output_dir / "validation_issues.json").write_text(
-        json.dumps([item.model_dump(mode="json") for item in batch.issues], indent=2),
+        json.dumps(
+            [item.model_dump(mode="json") for item in batch.issues],
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
         encoding="utf-8",
+        newline="\n",
     )
     (output_dir / "review_queue.json").write_text(
-        json.dumps([item.model_dump(mode="json") for item in batch.queued_for_review], indent=2),
+        json.dumps(
+            [item.model_dump(mode="json") for item in batch.queued_for_review],
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
         encoding="utf-8",
+        newline="\n",
     )
