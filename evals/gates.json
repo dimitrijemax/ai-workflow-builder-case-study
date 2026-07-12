@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "corpus_version": "v1",
+  "corpus": {
+    "pipeline_sha256": "bed0243bf42705fd45e3d07cb53812ac37b91bfbd1867990ac9593abbf33158b",
+    "rubric_sha256": "331e40592f15e1fcb656aa7a4171dbfee8cd889c56d3b7f4c6ce32d5954425fa"
+  },
+  "pipeline": {
+    "schema_valid": {
+      "denominator": 12,
+      "minimum_correct": 12,
+      "min_rate": "1.0000",
+      "max_errors": 0,
+      "rationale": "Every provider payload must satisfy the public OpsInsight contract; a schema-invalid prediction remains in the denominator and counts as incorrect."
+    },
+    "category_conformance": {
+      "denominator": 12,
+      "minimum_correct": 12,
+      "min_rate": "1.0000",
+      "max_errors": 0,
+      "rationale": "Category is deterministic on unambiguous synthetic inputs; exact reproduction is the only correct contract, not an achievement."
+    },
+    "review_routing_conformance": {
+      "denominator": 12,
+      "minimum_correct": 12,
+      "min_rate": "1.0000",
+      "max_errors": 0,
+      "rationale": "Whether a note is routed to review must match bool(expected_issue_codes) on every case."
+    },
+    "issue_exact_set_conformance": {
+      "denominator": 12,
+      "minimum_correct": 12,
+      "min_rate": "1.0000",
+      "max_errors": 0,
+      "rationale": "The exact validator-in-pipeline issue set, including the reachable multi-issue case A-10, is deterministic."
+    }
+  },
+  "rubric": {
+    "review_routing_conformance": {
+      "denominator": 6,
+      "minimum_correct": 6,
+      "min_rate": "1.0000",
+      "max_errors": 0,
+      "rationale": "Review routing on insight fixtures must match the golden review flag."
+    },
+    "issue_exact_set_conformance": {
+      "denominator": 6,
+      "minimum_correct": 6,
+      "min_rate": "1.0000",
+      "max_errors": 0,
+      "rationale": "The pure rubric's exact issue set per fixture is deterministic."
+    },
+    "critical_overconfidence_false_negatives": {
+      "max_count": 0,
+      "rationale": "A missed overconfident summary is the highest-risk error; zero false negatives is required over the positive support cases B-04 and B-06, expressed as a tolerated absolute count, not a rate."
+    }
+  },
+  "hard_invariants": {
+    "deterministic_rerun_equality": {
+      "required": true,
+      "rationale": "Two isolated runs must produce byte-identical Markdown and JSON evidence."
+    },
+    "generic_privacy_pattern_violations": {
+      "max_count": 0,
+      "rationale": "No generic email, phone, or credential-hint pattern may appear in fixtures or generated evidence."
+    }
+  }
+}

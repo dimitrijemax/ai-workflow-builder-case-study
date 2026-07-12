@@ -1,0 +1,182 @@
+[
+  {
+    "case_id": "A-01",
+    "note": {
+      "id": "OPS-3001",
+      "channel": "field_note",
+      "text": "The weekly headcount export shows a mismatch against the source field, so the validation rule needs a correction path before the review meeting.",
+      "created_at": "day_01_09"
+    },
+    "expected_category": "data_quality",
+    "expected_sentiment": "neutral",
+    "expected_issue_codes": [],
+    "expected_review_required": false,
+    "label_rationale": "Numbers in an exported report do not match the underlying source, which is a data-quality defect rather than a broken feature or a request.",
+    "tags": ["single_category", "clean"]
+  },
+  {
+    "case_id": "A-02",
+    "note": {
+      "id": "OPS-3002",
+      "channel": "portal",
+      "text": "A pilot coordinator requests the standard admin login setup for a new reviewer before the scheduled onboarding session.",
+      "created_at": "day_01_10"
+    },
+    "expected_category": "access",
+    "expected_sentiment": "neutral",
+    "expected_issue_codes": [],
+    "expected_review_required": false,
+    "label_rationale": "The note is a routine request to set up standard sign-in for a new reviewer ahead of an onboarding session; it is a calm administrative access request, so the tone is neutral.",
+    "tags": ["single_category", "clean"]
+  },
+  {
+    "case_id": "A-03",
+    "note": {
+      "id": "OPS-3003",
+      "channel": "chat",
+      "text": "The nightly data sync between the field app and the planning dashboard drops records, so the two systems no longer agree by morning.",
+      "created_at": "day_01_11"
+    },
+    "expected_category": "integration",
+    "expected_sentiment": "neutral",
+    "expected_issue_codes": [],
+    "expected_review_required": false,
+    "label_rationale": "Data fails to move reliably between two connected systems, which is an integration reliability problem rather than a fault in a single screen.",
+    "tags": ["single_category", "clean"]
+  },
+  {
+    "case_id": "A-04",
+    "note": {
+      "id": "OPS-3004",
+      "channel": "chat",
+      "text": "Saving a custom operations dashboard throws an error and the change fails after a page reload for every user on the team.",
+      "created_at": "day_01_12"
+    },
+    "expected_category": "bug",
+    "expected_sentiment": "negative",
+    "expected_issue_codes": [],
+    "expected_review_required": false,
+    "label_rationale": "A save action raises an error and does not persist, a defect on one screen; the note reports a broken workflow, so the tone is negative, and a concrete next step is already implied.",
+    "tags": ["single_category", "negative_with_action"]
+  },
+  {
+    "case_id": "A-05",
+    "note": {
+      "id": "OPS-3005",
+      "channel": "field_note",
+      "text": "The new export filter that groups open items by owner works well and the team finds it helpful for the weekly stand-up.",
+      "created_at": "day_02_09"
+    },
+    "expected_category": "feature_request",
+    "expected_sentiment": "positive",
+    "expected_issue_codes": [],
+    "expected_review_required": false,
+    "label_rationale": "The team describes a reporting capability they value and speak well of, so it reads as positive product feedback shaped like a feature item.",
+    "tags": ["single_category", "positive", "clean"]
+  },
+  {
+    "case_id": "A-06",
+    "note": {
+      "id": "OPS-3006",
+      "channel": "survey",
+      "text": "The onboarding guide docs are missing clear setup instructions for new reviewers joining the rollout.",
+      "created_at": "day_02_10"
+    },
+    "expected_category": "documentation",
+    "expected_sentiment": "neutral",
+    "expected_issue_codes": [],
+    "expected_review_required": false,
+    "label_rationale": "An onboarding document lacks the steps a new reviewer needs; the gap is in written guidance, not in the software itself.",
+    "tags": ["single_category", "clean"]
+  },
+  {
+    "case_id": "A-07",
+    "note": {
+      "id": "OPS-3007",
+      "channel": "chat",
+      "text": "The reporting dashboard is slow during the weekly cycle and sometimes hits a timeout with high latency for large stores.",
+      "created_at": "day_02_11"
+    },
+    "expected_category": "performance",
+    "expected_sentiment": "neutral",
+    "expected_issue_codes": [],
+    "expected_review_required": false,
+    "label_rationale": "The report is usable but slow and occasionally times out under load, which is a performance characteristic rather than a correctness defect.",
+    "tags": ["single_category", "clean"]
+  },
+  {
+    "case_id": "A-08",
+    "note": {
+      "id": "OPS-3008",
+      "channel": "field_note",
+      "text": "The rollout mapping handoff has no owner and the operating routine for the next step is missing from the plan.",
+      "created_at": "day_02_12"
+    },
+    "expected_category": "process_gap",
+    "expected_sentiment": "neutral",
+    "expected_issue_codes": [],
+    "expected_review_required": false,
+    "label_rationale": "A required handoff step in the operating routine has no owner and is undefined, which is a process gap rather than a documentation or access issue.",
+    "tags": ["single_category", "clean"]
+  },
+  {
+    "case_id": "A-09",
+    "note": {
+      "id": "OPS-3009",
+      "channel": "survey",
+      "text": "The stakeholder left a short note about the overall situation and did not specify any area, owner, or next step.",
+      "created_at": "day_03_09"
+    },
+    "expected_category": "other",
+    "expected_sentiment": "neutral",
+    "expected_issue_codes": ["low_confidence"],
+    "expected_review_required": true,
+    "label_rationale": "The note is too vague to place in any specific operational area, so the honest category is other; the tone is a neutral, low-signal remark, and its thinness warrants a review flag.",
+    "tags": ["fallback_other", "single_issue"]
+  },
+  {
+    "case_id": "A-10",
+    "note": {
+      "id": "OPS-3010",
+      "channel": "chat",
+      "text": "The reviewer is frustrated and urgent about the overall situation, but the note never names any specific area, owner, or step to take.",
+      "created_at": "day_03_10"
+    },
+    "expected_category": "other",
+    "expected_sentiment": "negative",
+    "expected_issue_codes": ["low_confidence", "negative_without_action"],
+    "expected_review_required": true,
+    "label_rationale": "The note cannot be placed in any operational area and the writer is clearly upset while asking for nothing concrete; an other-category note with a negative tone and no follow-up needs review on two counts.",
+    "tags": ["fallback_other", "multi_issue", "reachable_multi_issue"]
+  },
+  {
+    "case_id": "A-11",
+    "note": {
+      "id": "OPS-3011",
+      "channel": "portal",
+      "text": "A store manager requests the standard admin login setup after a routine data sync change; the access step is the primary item for today's scheduled review.",
+      "created_at": "day_03_11"
+    },
+    "expected_category": "access",
+    "expected_sentiment": "neutral",
+    "expected_issue_codes": [],
+    "expected_review_required": false,
+    "label_rationale": "This is an independently labelled case where two operational topics appear together: setting up sign-in and a routine data refresh. The note itself names account access as the primary item, so the human label is access, chosen from what the note emphasises. The tone is a plain scheduling request, so sentiment is neutral.",
+    "tags": ["collision", "challenge_case", "independent_label"]
+  },
+  {
+    "case_id": "A-12",
+    "note": {
+      "id": "OPS-3012",
+      "channel": "survey",
+      "text": "The setup guide may be missing a step and it is unclear which section a new reviewer should follow first.",
+      "created_at": "day_03_12"
+    },
+    "expected_category": "documentation",
+    "expected_sentiment": "neutral",
+    "expected_issue_codes": ["low_confidence"],
+    "expected_review_required": true,
+    "label_rationale": "The topic is written setup guidance, but the note is tentative and hedged and never states what is actually wrong, so the low certainty of the note warrants a review flag even though its tone stays neutral.",
+    "tags": ["single_category", "confidence_boundary", "single_issue"]
+  }
+]

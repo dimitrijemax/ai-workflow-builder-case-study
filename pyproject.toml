@@ -10,7 +10,7 @@ dependencies = [
 ]
 
 [project.scripts]
-awb = "ai_workflow_builder.cli:app"
+awb = "ai_workflow_builder.cli:main"
 
 [dependency-groups]
 dev = [

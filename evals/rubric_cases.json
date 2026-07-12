@@ -1,0 +1,92 @@
+[
+  {
+    "case_id": "B-01",
+    "insight": {
+      "note_id": "INS-4001",
+      "category": "access",
+      "sentiment": "positive",
+      "summary": "Access recovery completed and the reviewer confirmed the console is usable again.",
+      "action_items": ["Confirm the reviewer can sign in and close the ticket."],
+      "confidence": 0.9
+    },
+    "expected_issue_codes": [],
+    "expected_review_required": false,
+    "label_rationale": "Confidence is well above the auto-pass line, the tone is non-negative with a concrete action recorded, and the summary makes no absolute claims, so the rubric stays silent.",
+    "tags": ["clean"]
+  },
+  {
+    "case_id": "B-02",
+    "insight": {
+      "note_id": "INS-4002",
+      "category": "process_gap",
+      "sentiment": "neutral",
+      "summary": "The note hints at a missing handoff step but the responsible team is still unsure.",
+      "action_items": ["Ask the owner to confirm the intended handoff step."],
+      "confidence": 0.5
+    },
+    "expected_issue_codes": ["low_confidence"],
+    "expected_review_required": true,
+    "label_rationale": "Confidence falls below the auto-pass line while tone, action, and wording are otherwise in order, so the only rubric flag is the low-confidence one.",
+    "tags": ["positive_support", "low_confidence"]
+  },
+  {
+    "case_id": "B-03",
+    "insight": {
+      "note_id": "INS-4003",
+      "category": "bug",
+      "sentiment": "negative",
+      "summary": "The export step failed for the reporting team and no follow-up was recorded on the insight.",
+      "action_items": [],
+      "confidence": 0.82
+    },
+    "expected_issue_codes": ["negative_without_action"],
+    "expected_review_required": true,
+    "label_rationale": "A negative-toned insight records no follow-up action, exactly the gap the missing-action flag exists to catch; confidence is high and the wording is plain.",
+    "tags": ["positive_support", "negative_without_action"]
+  },
+  {
+    "case_id": "B-04",
+    "insight": {
+      "note_id": "INS-4004",
+      "category": "integration",
+      "sentiment": "neutral",
+      "summary": "This mapping is guaranteed to be always correct and needs no further checks before rollout.",
+      "action_items": ["Publish the mapping to the shared integration guide."],
+      "confidence": 0.88
+    },
+    "expected_issue_codes": ["overconfident_summary"],
+    "expected_review_required": true,
+    "label_rationale": "The summary asserts an absolute, unqualified correctness guarantee, which the rubric treats as unsafe overconfidence; confidence, tone, and action are otherwise clean.",
+    "tags": ["positive_support", "overconfident_summary"]
+  },
+  {
+    "case_id": "B-05",
+    "insight": {
+      "note_id": "INS-4005",
+      "category": "documentation",
+      "sentiment": "neutral",
+      "summary": "The guide was correct in this checked example and is always reviewed after a peer read before release.",
+      "action_items": ["Merge the guide update after a peer read."],
+      "confidence": 0.65
+    },
+    "expected_issue_codes": [],
+    "expected_review_required": false,
+    "label_rationale": "This insight sits exactly on the auto-pass confidence line, and its summary describes a single checked example and a routine peer review without making an absolute, unqualified claim, so it stays clean on both the confidence and the wording checks.",
+    "tags": ["boundary", "threshold_exact", "lexical_near_boundary"]
+  },
+  {
+    "case_id": "B-06",
+    "insight": {
+      "note_id": "INS-4006",
+      "category": "other",
+      "sentiment": "negative",
+      "summary": "This unclear escalation is certainly always correct and the team recorded no follow-up of any kind.",
+      "action_items": [],
+      "confidence": 0.4
+    },
+    "expected_issue_codes": ["low_confidence", "negative_without_action", "overconfident_summary"],
+    "expected_review_required": true,
+    "label_rationale": "Low confidence, a negative tone with no recorded action, and an absolute overconfident summary all apply at once, so the rubric raises every flag together in canonical order.",
+    "tags": ["multi_issue", "all_codes"]
+  }
+]
