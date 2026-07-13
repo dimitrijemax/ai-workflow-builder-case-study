@@ -14,11 +14,11 @@ jobs:
       - name: Set up Python
         run: uv python install 3.12
       - name: Install dependencies
-        run: uv sync --all-extras
+        run: uv sync --locked --all-extras
       - name: Lint
-        run: uv run ruff check .
+        run: uv run --locked ruff check .
       - name: Test
-        run: uv run pytest -q
+        run: uv run --locked pytest -q
 
   gitleaks:
     runs-on: ubuntu-latest
@@ -30,3 +30,26 @@ jobs:
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  evaluation-evidence:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: Set up Python
+        run: uv python install 3.12
+      - name: Install dependencies
+        run: uv sync --locked --all-extras
+      - name: Render and verify Markdown evidence
+        run: uv run --locked awb eval --check --format markdown --output evaluation-evidence.md
+      - name: Render and verify JSON evidence
+        run: uv run --locked awb eval --check --format json --output evaluation-evidence.json
+      - name: Upload evaluation evidence artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: evaluation-evidence-${{ github.sha }}
+          path: |
+            evaluation-evidence.md
+            evaluation-evidence.json
+          if-no-files-found: error
