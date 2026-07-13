@@ -100,6 +100,26 @@ This repository is a distilled clean-room kernel of a larger private project tha
 
 This public kernel keeps the default path offline and deterministic for review and CI: insight extraction is performed by the `DeterministicRuleProvider` (keyword and rule based), while the separate rubric validators — not the provider — flag low confidence, a negative-sentiment insight that carries no action item, and overconfident summary language. No real-model provider or network adapter is bundled here. Only the pinned dependency bootstrap (`uv sync --locked`) may reach the public package registry; application, demo, and test execution are fully offline afterward, with no model or API calls and no credentials.
 
+## Evaluation Evidence (v0.2)
+
+Deterministic, synthetic evaluation evidence for this kernel is versioned under `evals/`. Reproduce it locally with locked commands:
+
+```bash
+uv sync --locked --all-extras
+uv run --locked awb eval
+uv run --locked awb eval --format json
+uv run --locked awb eval --check
+```
+
+- **Suite A (pipeline conformance): 12/12** cases conformant (12 correct of 12 total).
+- **Suite B (validator-rubric behavior): 6/6** cases conformant (6 correct of 6 total).
+
+Suite A and Suite B are reported separately, with independent denominators; there is no combined cross-suite score and no blended headline metric.
+
+These numbers are deterministic conformance against authored synthetic expectations, not model accuracy, model quality, generalization, or a production benchmark: the provider is a fixed rule engine, so exact reproduction is the correct and expected contract, not an achievement.
+
+Accepted limitations: the corpus is a small synthetic corpus, the provider is a fixed rule provider with no learned model, and this case study makes no production-quality claim. See [evals/README.md](evals/README.md) for the full accepted corpus, labels, gates, counts, and methodology.
+
 ## Boundaries
 
 See [PRIVACY.md](PRIVACY.md) for the data boundary model and [AGENTS.md](AGENTS.md) for rules for AI-assisted edits. Public examples are synthetic; real inputs, live outputs, local databases, credentials, and private notes do not belong in this repository.
