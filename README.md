@@ -76,6 +76,17 @@ flowchart LR
     G -->|rejected| H["Rejected items log"]
 ```
 
+## Workflow Explorer
+
+Open the committed [Workflow Explorer](docs/workflow-explorer/index.html) directly through
+`file://` to inspect all ten RUN traces, the accepted BUILD process, and the completed #9 → #10
+evidence trace. Rebuild or verify the deterministic offline artifact with locked dependencies:
+
+```bash
+uv run --locked python docs/workflow-explorer/build.py
+uv run --locked python docs/workflow-explorer/build.py --check
+```
+
 ## What This Demonstrates
 
 - Repeatable CLI workflow.

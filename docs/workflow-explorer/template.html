@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Workflow Explorer · AI Workflow Builder</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172033;
+      --muted: #5c667a;
+      --canvas: #f3f5f8;
+      --panel: #ffffff;
+      --line: #d9deea;
+      --accent: #2855d9;
+      --accent-soft: #e9efff;
+      --passed: #13795b;
+      --passed-soft: #e5f6ef;
+      --review: #9a5b00;
+      --review-soft: #fff2d8;
+      --pending: #596579;
+      --pending-soft: #eef1f5;
+      --danger: #aa2d3e;
+      --danger-soft: #fdebed;
+      --owner: #6446a6;
+      --owner-soft: #f0ebff;
+      --shadow: 0 14px 40px rgba(30, 43, 73, 0.08);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 8% 0%, #e7edff 0, transparent 30rem),
+        var(--canvas);
+      color: var(--ink);
+      line-height: 1.55;
+    }
+    a { color: var(--accent); text-underline-offset: 0.18em; }
+    a:focus-visible, button:focus-visible, select:focus-visible, summary:focus-visible {
+      outline: 3px solid #8aa5ff;
+      outline-offset: 3px;
+    }
+    code {
+      overflow-wrap: anywhere;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 0.9em;
+    }
+    .shell { width: min(1180px, calc(100% - 40px)); margin: 0 auto; }
+    .hero { padding: 64px 0 32px; }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(260px, 0.5fr);
+      gap: 28px;
+      align-items: end;
+    }
+    .kicker, .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-size: 0.76rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    h1, h2, h3, h4, p { margin-top: 0; }
+    h1 {
+      max-width: 820px;
+      margin-bottom: 16px;
+      font-size: clamp(2.35rem, 6vw, 5.5rem);
+      line-height: 0.98;
+      letter-spacing: -0.055em;
+    }
+    h2 { font-size: clamp(1.85rem, 4vw, 3rem); letter-spacing: -0.035em; }
+    .lede { max-width: 720px; color: var(--muted); font-size: 1.08rem; }
+    .hero-note {
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.78);
+      box-shadow: var(--shadow);
+    }
+    .hero-note p:last-child { margin-bottom: 0; }
+    .section-nav {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      border-block: 1px solid var(--line);
+      background: rgba(243, 245, 248, 0.94);
+      backdrop-filter: blur(14px);
+    }
+    .section-nav .shell { display: flex; gap: 8px; padding-block: 10px; }
+    .section-nav a {
+      padding: 8px 13px;
+      border-radius: 999px;
+      color: var(--ink);
+      font-size: 0.9rem;
+      font-weight: 750;
+      text-decoration: none;
+    }
+    .section-nav a:hover { background: var(--panel); }
+    main { padding-block: 30px 72px; }
+    .section {
+      margin-top: 28px;
+      padding: clamp(22px, 4vw, 42px);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+    .section-heading {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      align-items: end;
+      margin-bottom: 24px;
+    }
+    .section-heading > div:first-child { max-width: 760px; }
+    .section-heading p:last-child { margin-bottom: 0; color: var(--muted); }
+    .selector-wrap {
+      min-width: min(100%, 260px);
+      padding: 14px;
+      border-radius: 14px;
+      background: var(--accent-soft);
+    }
+    label { display: block; margin-bottom: 6px; font-size: 0.82rem; font-weight: 800; }
+    select {
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid #9cb0ea;
+      border-radius: 10px;
+      background: var(--panel);
+      color: var(--ink);
+      font: inherit;
+    }
+    .selection-status { margin: 8px 0 0; font-size: 0.78rem; color: var(--muted); }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .metric {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fbfcff;
+    }
+    .metric strong { display: block; font-size: 2rem; line-height: 1; }
+    .metric span { color: var(--muted); font-size: 0.86rem; }
+    .run-trace {
+      margin-top: 14px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fbfcff;
+      overflow: clip;
+    }
+    .run-trace[hidden] { display: none; }
+    summary {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: center;
+      padding: 18px 20px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    summary strong { font-size: 1.08rem; }
+    summary small { display: block; margin-top: 3px; color: var(--muted); }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 4px 9px;
+      border: 1px solid currentColor;
+      border-radius: 999px;
+      color: var(--pending);
+      background: var(--pending-soft);
+      font-size: 0.72rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .status-passed .status-badge, .status-badge.status-passed { color: var(--passed); background: var(--passed-soft); }
+    .status-needs_review .status-badge, .status-badge.status-needs_review { color: var(--review); background: var(--review-soft); }
+    .status-pending .status-badge, .status-badge.status-pending { color: var(--pending); background: var(--pending-soft); }
+    .status-approved .status-badge, .status-badge.status-approved { color: var(--passed); background: var(--passed-soft); }
+    .status-rejected .status-badge, .status-badge.status-rejected { color: var(--danger); background: var(--danger-soft); }
+    .status-blocked_owner .status-badge, .status-badge.status-blocked_owner { color: var(--owner); background: var(--owner-soft); }
+    .trace-facts {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1px;
+      border-block: 1px solid var(--line);
+      background: var(--line);
+    }
+    .trace-facts p { margin: 0; padding: 14px; background: var(--panel); }
+    .trace-facts strong, .trace-facts span { display: block; }
+    .trace-facts strong { font-size: 0.73rem; text-transform: uppercase; letter-spacing: 0.06em; }
+    .trace-facts span { margin-top: 4px; color: var(--muted); font-size: 0.86rem; }
+    .trace-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      padding: 18px;
+    }
+    .trace-node {
+      min-width: 0;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-left: 5px solid var(--pending);
+      border-radius: 14px;
+      background: var(--panel);
+    }
+    .trace-node.status-passed { border-left-color: var(--passed); }
+    .trace-node.status-needs_review { border-left-color: var(--review); }
+    .node-heading { display: flex; gap: 10px; align-items: start; }
+    .node-heading > div { flex: 1; min-width: 0; }
+    .node-shape {
+      display: grid;
+      flex: 0 0 34px;
+      width: 34px;
+      height: 34px;
+      place-items: center;
+      border: 2px solid currentColor;
+      border-radius: 9px;
+      color: var(--accent);
+      font-weight: 900;
+    }
+    .kind-gate .node-shape { border-radius: 50%; }
+    .kind-output .node-shape { transform: rotate(45deg); border-radius: 4px; }
+    .kind-output .node-shape::first-letter { transform: rotate(-45deg); }
+    .node-heading h4 { margin-bottom: 6px; }
+    .trace-node > p { min-height: 3.1em; color: var(--muted); font-size: 0.88rem; }
+    .evidence-list { margin: 0; padding: 0; list-style: none; }
+    .evidence-list li { display: grid; gap: 2px; margin-top: 8px; font-size: 0.77rem; }
+    .evidence-list span { color: var(--muted); }
+    .edge-list { margin: 0; padding: 0 18px 18px; list-style: none; }
+    .trace-edge {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      align-items: center;
+      padding: 8px 10px;
+      border-left: 3px solid var(--line);
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+    .trace-edge.edge-review { border-left-color: var(--review); background: var(--review-soft); }
+    .edge-label { margin-left: auto; }
+    .status-legend {
+      margin-top: 20px;
+      padding: 18px;
+      border: 1px dashed #aeb7ca;
+      border-radius: 16px;
+    }
+    .status-legend h3 { margin-bottom: 8px; }
+    .status-legend ul { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+    .status-legend li { padding: 7px 10px; border: 1px solid var(--line); border-radius: 10px; }
+    .build-layout { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 20px; }
+    .process-list { margin: 0; padding: 0; list-style: none; }
+    .process-list li {
+      display: grid;
+      grid-template-columns: 42px 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 11px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .step-index { color: var(--accent); font-family: monospace; font-weight: 800; }
+    .history-card { padding: 22px; border-radius: 18px; background: #172033; color: #f7f9ff; }
+    .history-card a { color: #afc3ff; }
+    .history-card .eyebrow { color: #afc3ff; }
+    .history-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .history-grid > div { display: grid; gap: 5px; padding: 14px; border: 1px solid #3a455c; border-radius: 12px; }
+    .history-grid span, .history-card > p:last-child { color: #c1c9d8; }
+    .sha-list { display: grid; gap: 10px; }
+    .sha-list > div { padding-top: 10px; border-top: 1px solid #3a455c; }
+    .sha-list dt { color: #c1c9d8; font-size: 0.74rem; text-transform: uppercase; }
+    .sha-list dd { margin: 4px 0 0; }
+    .suite-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .suite-card { padding: 22px; border: 1px solid var(--line); border-radius: 18px; background: #fbfcff; }
+    .suite-card h3 { margin-bottom: 8px; }
+    .suite-count strong { font-size: 1.65rem; }
+    .text-link { font-weight: 750; }
+    .honesty-note { margin-top: 18px; padding: 18px; border-left: 5px solid var(--accent); background: var(--accent-soft); }
+    footer { padding: 24px 0 48px; color: var(--muted); font-size: 0.84rem; }
+
+    @media (max-width: 736px) {
+      .shell { width: min(100% - 24px, 1180px); }
+      .hero { padding-top: 40px; }
+      .hero-grid, .build-layout, .suite-grid { grid-template-columns: 1fr; }
+      .section-heading { display: grid; align-items: stretch; }
+      .summary-grid { grid-template-columns: 1fr 1fr 1fr; }
+      .trace-grid { grid-template-columns: 1fr; }
+      .trace-facts { grid-template-columns: 1fr 1fr; }
+      .section-nav .shell { overflow-x: auto; }
+      .section-nav a { flex: 0 0 auto; }
+    }
+
+    @media (max-width: 320px) {
+      .shell { width: min(100% - 16px, 1180px); }
+      .section { padding: 16px; border-radius: 18px; }
+      .summary-grid, .trace-facts, .history-grid { grid-template-columns: 1fr; }
+      summary { align-items: start; padding: 14px; }
+      summary .status-badge { white-space: normal; }
+      .trace-grid { padding: 12px; }
+      .edge-label { width: 100%; margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="shell hero-grid">
+      <div>
+        <p class="kicker">Deterministic · offline · public-safe</p>
+        <h1>Workflow Explorer</h1>
+        <p class="lede">Inspect how synthetic notes move through provider extraction, Pydantic
+          contracts, validation, the human-review gate, and report inclusion. Then inspect the
+          accepted agent BUILD process and its completed public evidence trace.</p>
+      </div>
+      <aside class="hero-note" aria-label="Offline use note">
+        <p class="eyebrow">Open directly</p>
+        <p><strong>No server required.</strong> This committed file works through
+          <code>file://</code>. All styles, interaction, and fallback content are inline.</p>
+      </aside>
+    </div>
+  </header>
+
+  <nav class="section-nav" aria-label="Explorer sections">
+    <div class="shell">
+      <a href="#run">RUN traces</a>
+      <a href="#build">BUILD evidence</a>
+      <a href="#evaluation">Evaluation</a>
+      <a href="README.md">Contract</a>
+    </div>
+  </nav>
+
+  <main class="shell">
+    <section class="section" id="run" aria-labelledby="run-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">RUN · pipeline evidence</p>
+          <h2 id="run-title">Follow one note, audit every boundary</h2>
+          <p>Each trace is generated from the committed synthetic fixture and the returned objects
+            from the existing deterministic pipeline. Runtime timestamps are deliberately omitted.</p>
+        </div>
+        <div class="selector-wrap">
+          <label for="note-selector">Synthetic note</label>
+          <select id="note-selector" aria-describedby="selection-status">
+{{RUN_OPTIONS}}
+          </select>
+          <p class="selection-status" id="selection-status" aria-live="polite">Showing {{DEFAULT_NOTE_ID}}</p>
+        </div>
+      </div>
+
+      <div class="summary-grid" aria-label="Derived routing summary">
+        <div class="metric"><strong>{{RUN_TOTAL}}</strong><span>synthetic insights</span></div>
+        <div class="metric"><strong>{{RUN_AUTO_PASSED}}</strong><span>auto-passed</span></div>
+        <div class="metric"><strong>{{RUN_PENDING_REVIEW}}</strong><span>pending review</span></div>
+      </div>
+
+      <noscript>
+        <p class="honesty-note">JavaScript is off. All ten semantic traces remain available below;
+          the selector enhancement is optional.</p>
+      </noscript>
+
+      <div id="run-traces">
+{{RUN_TRACES}}
+      </div>
+
+      <aside class="status-legend" aria-labelledby="status-meaning">
+        <h3 id="status-meaning">Status meaning</h3>
+        <p>Every status is written as text and paired with a border or shape; color is never the
+          only signal.</p>
+        <ul>
+          <li>□ <code>pending</code> — waiting at a defined gate</li>
+          <li>▣ <code>passed</code> — deterministic check completed</li>
+          <li>○ <code>needs_review</code> — human decision required</li>
+          <li>✓ <code>approved</code> — human approval recorded</li>
+          <li>× <code>rejected</code> — human rejection recorded</li>
+          <li>◇ <code>blocked_owner</code> — owner decision required</li>
+        </ul>
+      </aside>
+    </section>
+
+    <section class="section" id="build" aria-labelledby="build-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">BUILD · accepted control flow</p>
+          <h2 id="build-title">One process model, one completed trace</h2>
+          <p>The process steps are parsed from <a href="../AGENT_PILOT.md"><code>{{BUILD_SOURCE}}</code></a>.
+            Historical evidence comes only from the bounded committed snapshot.</p>
+        </div>
+      </div>
+      <div class="build-layout">
+        <article>
+          <p class="eyebrow">Pilot state flow</p>
+          <ol class="process-list">
+{{BUILD_STEPS}}
+          </ol>
+        </article>
+{{BUILD_TRACE}}
+      </div>
+    </section>
+
+    <section class="section" id="evaluation" aria-labelledby="evaluation-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Evaluation · separate contracts</p>
+          <h2 id="evaluation-title">Explicit counts, independent denominators</h2>
+          <p>Evaluation evidence is read from the existing frozen synthetic corpus and evaluator.
+            The suites are shown separately.</p>
+        </div>
+      </div>
+      <div class="suite-grid">
+{{EVALUATION_SUITES}}
+      </div>
+      <p class="honesty-note"><strong>No combined cross-suite score.</strong> These are deterministic
+        conformance counts against authored synthetic expectations, not model accuracy, model
+        quality, generalization, or a production benchmark.</p>
+    </section>
+  </main>
+
+  <footer class="shell">
+    Generated deterministically from committed public-safe sources. No live data, external assets,
+    analytics, model calls, or runtime network dependency.
+  </footer>
+
+  <script>
+    (() => {
+      const selector = document.getElementById("note-selector");
+      const status = document.getElementById("selection-status");
+      const traces = Array.from(document.querySelectorAll(".run-trace"));
+
+      function showTrace(noteId) {
+        traces.forEach((trace) => {
+          const selected = trace.dataset.noteId === noteId;
+          trace.hidden = !selected;
+          trace.open = selected;
+        });
+        status.textContent = `Showing ${noteId}`;
+      }
+
+      selector.addEventListener("change", () => showTrace(selector.value));
+      showTrace(selector.value);
+    })();
+  </script>
+</body>
+</html>
