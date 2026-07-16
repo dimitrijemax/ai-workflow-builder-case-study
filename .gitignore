@@ -7,6 +7,8 @@ __pycache__/
 .ruff_cache/
 out/
 data/
+!docs/workflow-explorer/data/
+!docs/workflow-explorer/data/build_trace.json
 *.sqlite
 *.sqlite3
 *.db

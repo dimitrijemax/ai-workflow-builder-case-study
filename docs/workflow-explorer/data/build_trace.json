@@ -1,0 +1,14 @@
+{
+  "issue": {
+    "number": 9,
+    "state": "closed",
+    "url": "https://github.com/dimitrijemax/ai-workflow-builder-case-study/issues/9"
+  },
+  "pull_request": {
+    "head_sha": "15e91a413766c2dae68f9aae3d16d5922c298794",
+    "merge_sha": "a12c3909b8d357a7a7fe5a3cab0b39267bb76c81",
+    "number": 10,
+    "state": "merged",
+    "url": "https://github.com/dimitrijemax/ai-workflow-builder-case-study/pull/10"
+  }
+}
