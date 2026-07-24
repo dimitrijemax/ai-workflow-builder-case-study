@@ -2,7 +2,16 @@
 
 ![CI](https://github.com/dimitrijemax/ai-workflow-builder-case-study/actions/workflows/ci.yml/badge.svg)
 
-Clean-room kernel of an internal operations AI workflow: synthetic notes become structured insights, validation checks, a human review gate, and an operational report.
+An offline case study of the reliability layer around AI-assisted operational workflows:
+typed outputs, validation rubrics, human review, deterministic evaluation, and auditable
+reporting.
+
+## Start Here
+
+- [Run the offline demo with locked commands](#the-demo-story).
+- [Review the deterministic evaluation evidence](#evaluation-evidence-v02).
+- [Read the privacy boundary](PRIVACY.md).
+- [Open the committed Workflow Explorer](docs/workflow-explorer/index.html).
 
 ## Why
 
@@ -87,14 +96,17 @@ uv run --locked python docs/workflow-explorer/build.py
 uv run --locked python docs/workflow-explorer/build.py --check
 ```
 
-## What This Demonstrates
+## Evidence Through Three Lenses
 
-- Repeatable CLI workflow.
-- Pydantic contracts for structured outputs.
-- Rubric checks for confidence, actionability, and unsafe overconfidence.
-- Human-in-the-loop review gate: AI output cannot approve itself.
-- Privacy and data-boundary discipline with synthetic fixtures only.
-- CI guardrails with ruff, pytest, and gitleaks.
+- **Applied AI and workflow engineering.** The offline CLI turns synthetic operations notes into
+  Pydantic-validated insights, applies rubric checks, routes flagged items to a human review gate,
+  and produces an auditable report with included, pending, and rejected states.
+- **AI QA and evaluation discipline.** Suite A and Suite B reproduce separate deterministic
+  conformance contracts against authored synthetic expectations; they do not measure model
+  accuracy, quality, or generalization.
+- **Technical implementation and supportability.** Locked dependencies, explicit CLI entry
+  points, pytest, Ruff, gitleaks, CI, and a deterministic Workflow Explorer build make the case
+  study inspectable and reproducible without external APIs or credentials.
 
 ## Example Commands
 
@@ -110,6 +122,21 @@ uv run awb report -o out/demo
 This repository is a distilled clean-room kernel of a larger private project that runs on real, privacy-sensitive data. It was rebuilt from scratch with synthetic data only; it is a case study, not a production system.
 
 This public kernel keeps the default path offline and deterministic for review and CI: insight extraction is performed by the `DeterministicRuleProvider` (keyword and rule based), while the separate rubric validators — not the provider — flag low confidence, a negative-sentiment insight that carries no action item, and overconfident summary language. No real-model provider or network adapter is bundled here. Only the pinned dependency bootstrap (`uv sync --locked`) may reach the public package registry; application, demo, and test execution are fully offline afterward, with no model or API calls and no credentials.
+
+## Authorship and AI Assistance
+
+The owner defined the outcome, boundaries, acceptance criteria, and final decisions for this case
+study. Coding agents contributed to analysis, implementation, verification support, and review
+under repository-recorded roles and task contracts. The owner reviewed and accepted the published
+claims and remains accountable for the release. This does not imply that the owner manually wrote
+every line or that agent output was accepted without human review.
+
+## What This Does Not Prove
+
+This repository does not demonstrate learned-model accuracy, model generalization, production
+readiness, commercial scale, clinical usefulness, or a hosted live system. Its provider is a fixed
+rule engine, its corpus is small and synthetic, and its evaluation results are deterministic
+conformance checks against authored expectations.
 
 ## Evaluation Evidence (v0.2)
 
@@ -134,3 +161,9 @@ Accepted limitations: the corpus is a small synthetic corpus, the provider is a 
 ## Boundaries
 
 See [PRIVACY.md](PRIVACY.md) for the data boundary model and [AGENTS.md](AGENTS.md) for rules for AI-assisted edits. Public examples are synthetic; real inputs, live outputs, local databases, credentials, and private notes do not belong in this repository.
+
+## Maintenance Status
+
+After `v0.2.0`, this repository is maintained as a frozen case study. Future changes are limited
+to correctness, security, dependency, and factual documentation fixes unless a separately
+approved scope reopens feature work.
